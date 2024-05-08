@@ -1,10 +1,125 @@
+//Importation
 const mysql = require("mysql");
 const express = require('express');
 const bcrypt = require("bcrypt");
 const cors = require("cors");
 const bodyParser = require("body-parser");
 
+//SQL
 let sql;
 const saltRounds = 10;
-const connString = "mysql://user-tp4:AVN_nM31pOklQMfuMULHoEv@mysql-tp2-sm-tr-monptitdoigt29-4875.aivencloud.com:16151/tp2bd?ssl-mode=REQUIRED";
+const connString = "mysql://user-tp4:AVN_nM31pOklQMfuMULHoEv@mysql-tp2-sm-tr-monptitdoigt29-4875.aivencloud.com:16151/tp2bd?ssl-mode=REQUIRED"; 
 let conn = mysql.createConnection(connString);
+
+// Paramètres serveur
+const app = express();
+app.use(express.json());
+app.use(cors({
+    origin: ["http://localhost:3000"],
+    methods: ["GET", "POST", "DELETE"],
+    credentials: true,
+}));
+app.use(bodyParser.urlencoded({extended: true}));
+app.use((req, res, next) => {
+    res.setHeader("Access-Control-Allow-Origin", "https://tp2-deploiement-react-sm-tr.vercel.app");
+    res.setHeader("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+    console.log("\nrequete recu !!!")
+    next();
+});
+
+
+//////////////////////////////////////////////////////////////////////////
+////////////////////////////       code       ////////////////////////////
+//////////////////////////////////////////////////////////////////////////
+
+/****Initial*****/
+conn.connect(err => {
+    if (err) throw err;
+    console.log("Connexion à la base de données tp4 !");
+
+    //DROP TABLE IF EXISTS
+    sql = "DROP TABLE IF EXISTS utilisateurs";
+    conn.query(sql, (err, result) => {
+        if (err) throw err;
+        console.log("Table Utilisateurs détruite ❌");
+    })
+
+    sql = "CREATE TABLE utilisateurs" +
+    " (Id INT not null AUTO_INCREMENT, " +
+    " Nom_Utilisateur VARCHAR(255), " +
+    " Mot_De_Passe VARCHAR(255), " +
+    " PRIMARY KEY (Id) )";
+    conn.query(sql, (err, result) => {
+        if (err) throw err;
+        console.log("Table Utilisateurs créée 👍");
+    })
+});
+
+/****enregistrer utilisateur*****/
+app.post('/enregistrer', (req, res) => {
+    const event = req.body;
+
+    sql = "INSERT INTO utilisateurs (Nom_Utilisateur, Mot_De_Passe) VALUES (?,?);";
+    bcrypt.hash(event.motdepasse, saltRounds, (er, hash) => {
+        if (er) console.log(er);
+
+        conn.query(sql, [event.nom, hash], (err, result) => {
+            if (err) throw err;
+            res.status(201).send(result);
+        });
+    });
+
+});
+
+/****login utilisateur*****/
+app.post('/login', express.urlencoded({extended: false}), (req, res) => {
+    const event = req.body;
+
+    sql = "SELECT * FROM utilisateurs WHERE Nom_Utilisateur = ?";
+    conn.query(sql, event.nom, (err, result) => {
+        if (err) res.send({err: err});
+
+        if (result.length > 0) {
+            bcrypt.compare(event.motdepasse, result[0].Mot_De_Passe, (error, response) => {
+                console.log("Mot de Passe compare: ", response);
+                if (response) {
+                    // https://expressjs.com/en/resources/middleware/session.html
+                    //1 - regenerate the session, which is good practice to help
+                    // guard against forms of session fixation
+                    req.session.regenerate((er) => {
+                        if (er) throw er;
+
+                        //2 - store user information in session, typically a user id
+                        req.session.user = result;
+
+                        //3 save the session before redirection to ensure page
+                        // load does not happen before session is saved
+                        req.session.save((e) => {
+                            if (e) console.log(e);
+                            console.log(req.session.user);
+                            res.json("Un utilisateur est connecté");
+                        })
+                    })
+                } else {
+                    res.status(502).send({msg: "Mauvaise authentication du nom d'utilisateur ou du mot de passe !"})
+                }
+            });
+        } else {
+            res.status(502).send({msg: "Aucun utilisateur trouvé !"})
+        }
+    });
+});
+app.get('/login', (req, res) => {
+    if (req.session.user) {
+        return res.send({estConnecte: true, utilisateur: req.session.user[0]});
+    } else {
+        return res.send({estConnecte: false});
+    }
+});
+
+// SERVER ON
+const server = app.listen(3006, function () {
+    const host = server.address().address;
+    const port = server.address().port;
+    console.log("TP4 Samba-Taha http://%s:%s", host, port)
+});
