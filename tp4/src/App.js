@@ -1,18 +1,20 @@
 import React from 'react';
-import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
-import Enregistrement from './fenetreLogin/Enregistrement';
-import Login from './fenetreLogin/Login';
-import Boutique from './fenetreLogin/Boutique';
+import { BrowserRouter, Route, Routes} from 'react-router-dom';
+import Enregistrement from './Component/Enregistrement';
+import Login from './Component/Login';
+import Boutique from './Component/Boutique';
 
 const App = () => {
   return (
-    <Router>
-      <Switch>
-        <Route exact path="/Enregistrement" component={Enregistrement} />
-        <Route path="/login" component={Login} />
-        <Route path="/boutique" component={Boutique} />
-      </Switch>
-    </Router>
+    <div>
+      <BrowserRouter>
+      <Routes>
+        <Route exact path="/" element={<Enregistrement></Enregistrement>} />
+        <Route path="/login" element={<Login></Login>} />
+        <Route path="/boutique" element={<Boutique></Boutique>} />
+      </Routes>
+    </BrowserRouter>
+    </div>
   );
 };
 
