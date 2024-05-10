@@ -1,31 +1,25 @@
-import React, { useState, useEffect} from 'react';
+import React, { useState} from 'react';
 import axios from 'axios';
-
+import {useNavigate} from 'react-router-dom';
 
 const Registration = () => {
+
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [registrationSuccess, setRegistrationSuccess] = useState(false); // Ajouter l'état registrationSuccess
+  const nav = useNavigate();
 
-
-  useEffect(() => {
     // Effectuer une action après chaque changement de l'état d'enregistrement
     // Par exemple, rediriger l'utilisateur vers la page de connexion après un enregistrement réussi
-    if (registrationSuccess) {
-      console.log("Enregistrement réussi ! Redirection vers la page de connexion...");
-      window.location.href = 'http://localhost:3006/login'; // ou une autre méthode de navigation
-    }
-  }, [registrationSuccess]); // Déclencher l'effet lorsque registrationSuccess change
 
   const handleRegistration = async () => {
-    try {
-      const response = await axios.post('http://localhost:3006/enregistrer', { username, password });
-      console.log(response.data);
-      setRegistrationSuccess(true); // Définir l'état d'enregistrement sur réussi
-    } catch (error) {
-      console.error(error);
-      // Afficher un message d'erreur à l'utilisateur
-    }
+   if(new RegExp("\\w+\\s?").test(username) && new RegExp("\\w{3,}").test(password)) {
+    await axios.post('http://localhost:3006/enregistrer', { username, password })
+      .then((response) => {
+        console.log(response.data);
+        console.log("Enregistrement réussi ! Redirection vers la page de connexion...");
+        nav('/login');
+    }).catch(error => console.log(error));
+   }
   };
 
   return (
