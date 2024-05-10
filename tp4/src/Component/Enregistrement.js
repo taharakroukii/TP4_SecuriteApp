@@ -13,13 +13,13 @@ const Registration = () => {
     // Par exemple, rediriger l'utilisateur vers la page de connexion après un enregistrement réussi
     if (registrationSuccess) {
       console.log("Enregistrement réussi ! Redirection vers la page de connexion...");
-      window.location.href = 'http://localhost:3000/login'; // ou une autre méthode de navigation
+      window.location.href = 'http://localhost:3006/login'; // ou une autre méthode de navigation
     }
   }, [registrationSuccess]); // Déclencher l'effet lorsque registrationSuccess change
 
   const handleRegistration = async () => {
     try {
-      const response = await axios.post('http://localhost:3000/enregistrer', { username, password });
+      const response = await axios.post('http://localhost:3006/enregistrer', { username, password });
       console.log(response.data);
       setRegistrationSuccess(true); // Définir l'état d'enregistrement sur réussi
     } catch (error) {
