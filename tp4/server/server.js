@@ -4,6 +4,7 @@ const express = require('express');
 const bcrypt = require("bcrypt");
 const cors = require("cors");
 const bodyParser = require("body-parser");
+const session = require("express-session");
 
 
 //SQL
@@ -21,8 +22,15 @@ app.use(cors({
     credentials: true,
 }));
 app.use(bodyParser.urlencoded({extended: true}));
+app.use(session({
+    key: "userID",                              //nom du cookie que l'on crée
+    secret: "secret du groupe !",
+    resave: false,                              // sauvegarde un objet cookie
+    saveUninitialized: false,                   // sauvegarder une session [seulement quand il ya nouvelle modif (false)/ tout le temps (true)]
+    cookie: {expires: 1000 * 60 * 60 * 24},
+}));
 app.use((req, res, next) => {
-    res.setHeader("Access-Control-Allow-Origin", "https://tp2-deploiement-react-sm-tr.vercel.app");
+    res.setHeader("Access-Control-Allow-Origin", "http://localhost:3000");
     res.setHeader("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
     console.log("\nrequete recu !!!")
     next();
@@ -77,11 +85,11 @@ app.post('/login', express.urlencoded({extended: false}), (req, res) => {
     const event = req.body;
 
     sql = "SELECT * FROM utilisateurs WHERE Nom_Utilisateur = ?";
-    conn.query(sql, event.nom, (err, result) => {
+    conn.query(sql, event.username, (err, result) => {
         if (err) res.send({err: err});
-
-        if (result.length > 0) {
-            bcrypt.compare(event.motdepasse, result[0].Mot_De_Passe, (error, response) => {
+        console.log(result)
+        if (result != undefined ) {
+            bcrypt.compare(event.password, result[0].Mot_De_Passe, (error, response) => {
                 console.log("Mot de Passe compare: ", response);
                 if (response) {
                     // https://expressjs.com/en/resources/middleware/session.html

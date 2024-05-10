@@ -1,28 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import axios from 'axios';
+//import {useNavigate} from 'react-router-dom';
 
-const Login = () => {
+const Login = (props) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
 
-  const handleLogin = async () => {
-    try {
-        const response = await axios.post('http://localhost:3006/login', { username, password });
-        console.log(response.data);
-        if (response.data.redirectTo) {
-            window.location.href = response.data.redirectTo;
-        }
-    } catch (error) {
-        console.error(error);
-    }
-};
+  const handleLogin = () => {
+      axios.post('http://localhost:3006/login', { username, password })
+        .then((response) => {
+          response.data.msg ? console.log(response.data.msg) : window.location.replace("http://localhost:3000/boutique");
+        }).catch(error => console.log(error));
+  };
 
-
-  useEffect(() => {
-    if (username !== '' && password !== '') {
-      handleLogin();
-    }
-  }, [username, password]);
 
   return (
     <div>
