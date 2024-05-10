@@ -34,37 +34,37 @@ app.use((req, res, next) => {
 //////////////////////////////////////////////////////////////////////////
 
 /****Initial*****/
-conn.connect(err => {
-    if (err) throw err;
-    console.log("Connexion à la base de données tp4 !");
+// conn.connect(err => {
+//     if (err) throw err;
+//     console.log("Connexion à la base de données tp4 !");
 
-    //DROP TABLE IF EXISTS
-    sql = "DROP TABLE IF EXISTS utilisateurs";
-    conn.query(sql, (err, result) => {
-        if (err) throw err;
-        console.log("Table Utilisateurs détruite ❌");
-    })
+//     //DROP TABLE IF EXISTS
+//     sql = "DROP TABLE IF EXISTS utilisateurs";
+//     conn.query(sql, (err, result) => {
+//         if (err) throw err;
+//         console.log("Table Utilisateurs détruite ❌");
+//     })
 
-    sql = "CREATE TABLE utilisateurs" +
-    " (Id INT not null AUTO_INCREMENT, " +
-    " Nom_Utilisateur VARCHAR(255), " +
-    " Mot_De_Passe VARCHAR(255), " +
-    " PRIMARY KEY (Id) )";
-    conn.query(sql, (err, result) => {
-        if (err) throw err;
-        console.log("Table Utilisateurs créée 👍");
-    })
-});
+//     sql = "CREATE TABLE utilisateurs" +
+//     " (Id INT not null AUTO_INCREMENT, " +
+//     " Nom_Utilisateur VARCHAR(255), " +
+//     " Mot_De_Passe VARCHAR(255), " +
+//     " PRIMARY KEY (Id) )";
+//     conn.query(sql, (err, result) => {
+//         if (err) throw err;
+//         console.log("Table Utilisateurs créée 👍");
+//     })
+// });
 
 /****enregistrer utilisateur*****/
 app.post('/enregistrer', (req, res) => {
     const event = req.body;
 
     sql = "INSERT INTO utilisateurs (Nom_Utilisateur, Mot_De_Passe) VALUES (?,?);";
-    bcrypt.hash(event.motdepasse, saltRounds, (er, hash) => {
+    bcrypt.hash(event.password, saltRounds, (er, hash) => {
         if (er) console.log(er);
 
-        conn.query(sql, [event.nom, hash], (err, result) => {
+        conn.query(sql, [event.username, hash], (err, result) => {
             if (err) throw err;
             res.status(201).send(result);
         });
