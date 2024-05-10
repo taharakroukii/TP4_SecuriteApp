@@ -7,21 +7,21 @@ const Login = () => {
 
   const handleLogin = async () => {
     try {
-      const response = await axios.post('/login', { username, password });
-      console.log(response.data);
-      // Rediriger l'utilisateur vers la page de la boutique après un login réussi
-      window.location.href = '/boutique';
+        const response = await axios.post('http://localhost:3000/login', { username, password });
+        console.log(response.data);
+        if (response.data.redirectTo) {
+            window.location.href = response.data.redirectTo;
+        }
     } catch (error) {
-      console.error(error);
-      // Afficher un message d'erreur à l'utilisateur
+        console.error(error);
     }
-  };
+};
+
 
   useEffect(() => {
     if (username !== '' && password !== '') {
       handleLogin();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [username, password]);
 
   return (
