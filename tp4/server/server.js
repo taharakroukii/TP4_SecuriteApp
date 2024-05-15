@@ -9,7 +9,7 @@ const session = require("express-session");
 
 //SQL
 let sql;
-const saltRounds = 12;
+const saltRounds = 10;
 const connString = "mysql://user-tp4:AVN_nM31pOklQMfuMULHoEv@mysql-tp2-sm-tr-monptitdoigt29-4875.aivencloud.com:16151/tp2bd?ssl-mode=REQUIRED"; 
 let conn = mysql.createConnection(connString);
 
@@ -83,10 +83,18 @@ app.post('/enregistrer', (req, res) => {
 /****login utilisateur*****/
 app.post('/login', express.urlencoded({extended: false}), (req, res) => {
     const event = req.body;
-
+    let responseHasBeenSent = false; // Indicateur pour savoir si une réponse a déjà été envoyée
+ 
     sql = "SELECT * FROM utilisateurs WHERE Nom_Utilisateur = ?";
     conn.query(sql, event.username, (err, result) => {
-        if (err) res.send({err: err});
+        if (err) {
+            if (!responseHasBeenSent) {
+                responseHasBeenSent = true;
+                res.send({err: err});
+            }
+            return;
+        }
+ 
         console.log(result)
         if (result != undefined ) {
             bcrypt.compare(event.password, result[0].Mot_De_Passe, (error, response) => {
@@ -97,24 +105,33 @@ app.post('/login', express.urlencoded({extended: false}), (req, res) => {
                     // guard against forms of session fixation
                     req.session.regenerate((er) => {
                         if (er) throw er;
-
+ 
                         //2 - store user information in session, typically a user id
                         req.session.user = result;
-
+ 
                         //3 save the session before redirection to ensure page
                         // load does not happen before session is saved
                         req.session.save((e) => {
                             if (e) console.log(e);
                             console.log(req.session.user);
-                            res.json("Un utilisateur est connecté");
+                            if (!responseHasBeenSent) {
+                                responseHasBeenSent = true;
+                                res.json("Un utilisateur est connecté");
+                            }
                         })
                     })
                 } else {
-                    res.status(502).send({msg: "Mauvaise authentication du nom d'utilisateur ou du mot de passe !"})
+                    if (!responseHasBeenSent) {
+                        responseHasBeenSent = true;
+                        res.status(502).send({msg: "Mauvaise authentication du nom d'utilisateur ou du mot de passe !"})
+                    }
                 }
             });
         } else {
-            res.status(502).send({msg: "Aucun utilisateur trouvé !"})
+            if (!responseHasBeenSent) {
+                responseHasBeenSent = true;
+                res.status(502).send({msg: "Aucun utilisateur trouvé !"})
+            }
         }
     });
 });

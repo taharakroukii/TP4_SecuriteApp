@@ -7,7 +7,7 @@ const Registration = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [registrationSuccess, setRegistrationSuccess] = useState(false); // Ajouter l'état registrationSuccess
-
+  const nav = useNavigate();
 
   // Effectuer une action après chaque changement de l'état d'enregistrement
   // Par exemple, rediriger l'utilisateur vers la page de connexion après un enregistrement réussi
