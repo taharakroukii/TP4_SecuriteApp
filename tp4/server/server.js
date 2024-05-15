@@ -9,7 +9,7 @@ const session = require("express-session");
 
 //SQL
 let sql;
-const saltRounds = 12;
+const saltRounds = 10;
 const connString = "mysql://user-tp4:AVN_nM31pOklQMfuMULHoEv@mysql-tp2-sm-tr-monptitdoigt29-4875.aivencloud.com:16151/tp2bd?ssl-mode=REQUIRED"; 
 let conn = mysql.createConnection(connString);
 
@@ -36,33 +36,6 @@ app.use((req, res, next) => {
     next();
 });
 
-
-//////////////////////////////////////////////////////////////////////////
-////////////////////////////       code       ////////////////////////////
-//////////////////////////////////////////////////////////////////////////
-
-/****Initial*****/
-// conn.connect(err => {
-//     if (err) throw err;
-//     console.log("Connexion à la base de données tp4 !");
-
-//     //DROP TABLE IF EXISTS
-//     sql = "DROP TABLE IF EXISTS utilisateurs";
-//     conn.query(sql, (err, result) => {
-//         if (err) throw err;
-//         console.log("Table Utilisateurs détruite ❌");
-//     })
-
-//     sql = "CREATE TABLE utilisateurs" +
-//     " (Id INT not null AUTO_INCREMENT, " +
-//     " Nom_Utilisateur VARCHAR(255), " +
-//     " Mot_De_Passe VARCHAR(255), " +
-//     " PRIMARY KEY (Id) )";
-//     conn.query(sql, (err, result) => {
-//         if (err) throw err;
-//         console.log("Table Utilisateurs créée 👍");
-//     })
-// });
 
 /****enregistrer utilisateur*****/
 app.post('/enregistrer', (req, res) => {

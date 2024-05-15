@@ -8,21 +8,13 @@ const Registration = () => {
   const [password, setPassword] = useState('');
   const nav = useNavigate();
 
-  // Effectuer une action après chaque changement de l'état d'enregistrement
-  // Par exemple, rediriger l'utilisateur vers la page de connexion après un enregistrement réussi
-
   const handleRegistration = async () => {
     const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{10,}$/;
-    //(?:[a-z])|(?:[A-Z])|(?:\d)|(?:\W)|(?:[_])
     const noConsecutiveChars = /(.)\1{2}/;
 
     console.log(passwordRegex.test(password))
     console.log(noConsecutiveChars.test(password))
 
-   
-      
-
-   
 
     if (new RegExp("\\w+\\s?").test(username) && passwordRegex.test(password) && !noConsecutiveChars.test(password)) {
       await axios.post('http://localhost:3006/enregistrer', { username, password })
