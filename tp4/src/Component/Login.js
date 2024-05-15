@@ -46,10 +46,11 @@ const Login = (props) => {
   const [password, setPassword] = useState('');
   const [ipBlacklist, setIpBlacklist] = useState([]);
   const [accessDenied, setAccessDenied] = useState(false);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     // Charger la liste des adresses IP non fiables depuis le fichier ip.txt
-    axios.get('/ip.txt')
+    axios.get('./ip.txt') // Utilisation du chemin relatif
       .then((response) => {
         // Diviser les lignes du fichier en un tableau d'adresses IP
         const ips = response.data.split('\n').map(ip => ip.trim());
@@ -58,21 +59,27 @@ const Login = (props) => {
   }, []);
 
   const handleLogin = () => {
-    // Vérifier si l'adresse IP de l'utilisateur est dans la liste des adresses non fiables
-    const userIp = '172.20.32.20'; // Remplacez ceci par la vraie adresse IP de l'utilisateur
+    // Votre logique de connexion ici
+
+    // Assurez-vous d'avoir obtenu l'adresse IP de l'utilisateur, soit côté client, soit côté serveur
+
+    const userIp = '172.20.32.20'; // Remplacez ceci par la vraie adresse IP de l'utilisateur obtenue côté client ou serveur
 
     if (ipBlacklist.includes(userIp)) {
       // Si l'adresse IP est dans la liste noire, afficher un message d'accès refusé
       setAccessDenied(true);
-      console.log("Accès refusé. Votre adresse IP est bloquée.");
+      setError("Accès refusé. Votre adresse IP est bloquée.");
       return; // Ne pas effectuer la requête de connexion
     }
 
     // Si l'adresse IP n'est pas dans la liste noire, effectuer la requête de connexion
-    axios.post('http://localhost:3006/login', { username, password })
+    axios.post('http://172.20.32.20:3006/login', { username, password })
       .then((response) => {
-        response.data.msg ? console.log(response.data.msg) : window.location.replace("http://localhost:3000/boutique");
-      }).catch(error => console.log(error));
+        response.data.msg ? console.log(response.data.msg) : window.location.replace("/boutique");
+      }).catch(error => {
+        setError("Une erreur s'est produite lors de la connexion. Veuillez réessayer.");
+        console.log(error);
+      });
   };
 
   return (
@@ -80,7 +87,7 @@ const Login = (props) => {
       {accessDenied ? (
         <div>
           <h2>Accès refusé</h2>
-          <p>Votre adresse IP est bloquée.</p>
+          <p>{error}</p>
         </div>
       ) : (
         <div>
@@ -104,7 +111,8 @@ const Login = (props) => {
   );
 };
 
-export default Login
+export default Login;
+
 
 
 
