@@ -11,7 +11,7 @@ const otpGenerator = require('otp-generator'); // Bibliothèque pour générer d
 //SQL
 let sql;
 const saltRounds = 10;
-const connString = "mysql://user-tp4:AVN_nM31pOklQMfuMULHoEv@mysql-tp2-sm-tr-monptitdoigt29-4875.aivencloud.com:16151/tp2bd?ssl-mode=REQUIRED"; 
+const connString = "mysql://user-tp4:AVN_nM31pOklQMfuMULHoEv@mysql-tp2-sm-tr-monptitdoigt29-4875.aivencloud.com:16151/tp2bd?ssl-mode=REQUIRED";
 let conn = mysql.createConnection(connString);
 
 // Paramètres serveur
@@ -22,13 +22,13 @@ app.use(cors({
     methods: ["GET", "POST", "DELETE"],
     credentials: true,
 }));
-app.use(bodyParser.urlencoded({extended: true}));
+app.use(bodyParser.urlencoded({ extended: true }));
 app.use(session({
     key: "userID",                              //nom du cookie que l'on crée
     secret: "secret du groupe !",
     resave: false,                              // sauvegarde un objet cookie
     saveUninitialized: false,                   // sauvegarder une session [seulement quand il ya nouvelle modif (false)/ tout le temps (true)]
-    cookie: {expires: 1000 * 60 * 60 * 24},
+    cookie: { expires: 1000 * 60 * 60 * 24 },
 }));
 app.use((req, res, next) => {
     res.setHeader("Access-Control-Allow-Origin", "http://localhost:3000");
@@ -38,10 +38,10 @@ app.use((req, res, next) => {
 });
 
 // 2FA
-const code2Facteur = otpGenerator.generate(6, { 
-    lowerCaseAlphabets : false,
-    upperCaseAlphabets: false, 
-    specialChars: false 
+const code2Facteur = otpGenerator.generate(6, {
+    lowerCaseAlphabets: false,
+    upperCaseAlphabets: false,
+    specialChars: false
 });
 code2Facteur.toString()
 
@@ -64,7 +64,7 @@ app.post('/enregistrer', (req, res) => {
 
 });
 
-app.post('/login', express.urlencoded({extended: false}), (req, res) => {
+app.post('/login', express.urlencoded({ extended: false }), (req, res) => {
     const event = req.body;
     let responseHasBeenSent = false; // Indicateur pour savoir si une réponse a déjà été envoyée
 
@@ -73,13 +73,13 @@ app.post('/login', express.urlencoded({extended: false}), (req, res) => {
         if (err) {
             if (!responseHasBeenSent) {
                 responseHasBeenSent = true;
-                res.send({err: err});
+                res.send({ err: err });
             }
             return;
         }
 
         console.log(result)
-        if (result != undefined ) {
+        if (result != undefined) {
             bcrypt.compare(event.password, result[0].Mot_De_Passe, (error, response) => {
                 console.log("Mot de Passe compare: ", response);
                 if (response) {
@@ -91,10 +91,16 @@ app.post('/login', express.urlencoded({extended: false}), (req, res) => {
 
                         //2 - store user information in session, typically a user id
                         req.session.user = result;
-                        
+
                         //3 - generer le code à 2 facteurs
                         const deuxfacteur = code2Facteur.toString()
-                        req.session.twofactor = deuxfacteur
+
+                        // 4 Enregistrer le code 2FA
+                        sql = "INSERT INTO otp (otp,horodate) values (?,?);";
+                        conn.query(sql, [deuxfacteur, new Date()], (err, result) => {
+                            if (err) throw err;
+                            console.log("Un code 2FA à été enregistré");
+                        })
 
                         //4 save the session before redirection to ensure page
                         // load does not happen before session is saved
@@ -103,21 +109,21 @@ app.post('/login', express.urlencoded({extended: false}), (req, res) => {
                             console.log(req.session.user);
                             if (!responseHasBeenSent) {
                                 responseHasBeenSent = true;
-                                res.json("Un utilisateur est connecté ! \n le code 2FA est : "+ deuxfacteur);
+                                res.json("Un utilisateur est connecté ! \n le code 2FA est : " + deuxfacteur);
                             }
                         })
                     })
                 } else {
                     if (!responseHasBeenSent) {
                         responseHasBeenSent = true;
-                        res.status(502).send({msg: "Mauvaise authentication du nom d'utilisateur ou du mot de passe !"})
+                        res.status(502).send({ msg: "Mauvaise authentication du nom d'utilisateur ou du mot de passe !" })
                     }
                 }
             });
         } else {
             if (!responseHasBeenSent) {
                 responseHasBeenSent = true;
-                res.status(502).send({msg: "Aucun utilisateur trouvé !"})
+                res.status(502).send({ msg: "Aucun utilisateur trouvé !" })
             }
         }
     });
@@ -125,24 +131,59 @@ app.post('/login', express.urlencoded({extended: false}), (req, res) => {
 
 app.get('/login', (req, res) => {
     if (req.session.user) {
-        return res.send({estConnecte: true, utilisateur: req.session.user[0]});
+        return res.send({ estConnecte: true, utilisateur: req.session.user[0] });
     } else {
-        return res.send({estConnecte: false});
+        return res.send({ estConnecte: false });
     }
 });
 
 //////////////////// 2FA ////////////////////////////////////
 app.post('/verify-two-factor', (req, res) => {
-    const twoFactorPass  = req.body.twoFactorPass;
     const userId = req.session.userId; // Supposons que l'identifiant de l'utilisateur est stocké dans la session
-  
-    // Récupérer le code OTP associé à l'utilisateur depuis la base de données ou le cache
-    if (twoFactorPass === req.session.twofactor) {
-      res.json({ success: true });
-    } else {
-      res.json({ success: false, msg: 'Code à deux facteurs invalide' });
-    }
-  });
+ 
+    // 1 - Supprimer les codes 2FA après 15 minutes
+    sql = "SELECT * FROM otp;";
+    conn.query(sql, (err, result) => {
+        if (err) throw err;
+
+        for(o = 0 ; o< result.length; o++){
+            const minutes =  Math.abs((new Date().getTime() - new Date(result[o].horodate).getTime())/1000 /60) %60
+            console.log(minutes)
+            const sql2 = "DELETE FROM otp WHERE otp = ?"; 
+
+            if(minutes >= 15 || minutes < 0){
+                conn.query(sql2, [result[o].otp],(errs, results) => {
+                    if (errs) throw errs;
+                })
+            }
+        }
+    })
+
+    // 2 -Chercher le code 2FA enregistré
+    input2FA = req.body.twoFactorPass
+    twoFactorPass = undefined;
+    sql = "SELECT * FROM otp WHERE otp = ?";
+    conn.query(sql, input2FA, (err, result) => {
+        if (err) throw err;
+        twoFactorPass = result[0] ;
+        console.log(result )
+        // Récupérer le code OTP associé à l'utilisateur depuis la base de données ou le cache
+        if (twoFactorPass) {
+    
+    
+    
+    
+            res.json({ success: true });
+        } else {
+            res.json({ success: false, msg: 'Code à deux facteurs invalide' });
+        }
+
+    })
+
+
+
+    
+});
 
 
 // SERVER ON
