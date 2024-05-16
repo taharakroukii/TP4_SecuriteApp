@@ -43,9 +43,15 @@ const code2Facteur = otpGenerator.generate(6, {
     upperCaseAlphabets: false,
     specialChars: false
 });
-code2Facteur.toString()
 
 
+app.get('/ips', (req, res)=>{
+    fs.readFile( "../src/Component"+"ip.txt",'utf8', (err,data) => {
+        const ips = JSON.parse( data );
+        console.log( ips );
+        res.end( data);
+    })
+});
 
 
 /****enregistrer utilisateur*****/
