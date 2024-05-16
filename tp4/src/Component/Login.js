@@ -189,17 +189,26 @@
 /********************************* 2FA ***************************************************/
 import React, { useState } from 'react';
 import axios from 'axios';
+import ModalDeuxFacteur from './2FA/ModalDeuxFacteur';
+
 
 const Login = (props) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [twoFactorPass,settwoFactorPass] = useState('');
-  
+  const [showTwoFactorModal,setShowTwoFactorModal] = useState(false);
 
+  
   const handleLogin = () => {
     axios.post('http://localhost:3006/login', { username, password })
       .then((response) => {
-        response.data.msg ? console.log(response.data.msg) : window.location.replace("/boutique");
+        if(response.data.msg ){
+          console.log(response.data.msg) 
+        }else{
+          console.log(response.data);
+          setShowTwoFactorModal(true);
+        }
+
+        
       }).catch(error => console.log(error));
   };
 
@@ -218,7 +227,10 @@ const Login = (props) => {
         value={password}
         onChange={(e) => setPassword(e.target.value)}
       />
+
       <button onClick={() => handleLogin()}>Se connecter</button>
+
+      {showTwoFactorModal && <ModalDeuxFacteur/>}
     </div>
   );
 };

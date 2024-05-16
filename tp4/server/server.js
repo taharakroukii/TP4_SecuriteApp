@@ -5,6 +5,7 @@ const bcrypt = require("bcrypt");
 const cors = require("cors");
 const bodyParser = require("body-parser");
 const session = require("express-session");
+const otpGenerator = require('otp-generator'); // Bibliothèque pour générer des codes OTP
 
 
 //SQL
@@ -36,6 +37,8 @@ app.use((req, res, next) => {
     next();
 });
 
+// 2FA
+const code2Facteur = otpGenerator.generate(6, { upperCaseAlphabets: false, specialChars: false });
 
 /****enregistrer utilisateur*****/
 app.post('/enregistrer', (req, res) => {
@@ -88,7 +91,7 @@ app.post('/login', express.urlencoded({extended: false}), (req, res) => {
                             console.log(req.session.user);
                             if (!responseHasBeenSent) {
                                 responseHasBeenSent = true;
-                                res.json("Un utilisateur est connecté");
+                                res.json("Un utilisateur est connecté ! \n le code 2FA est : "+code2Facteur);
                             }
                         })
                     })
@@ -107,6 +110,7 @@ app.post('/login', express.urlencoded({extended: false}), (req, res) => {
         }
     });
 });
+
 app.get('/login', (req, res) => {
     if (req.session.user) {
         return res.send({estConnecte: true, utilisateur: req.session.user[0]});
@@ -114,6 +118,23 @@ app.get('/login', (req, res) => {
         return res.send({estConnecte: false});
     }
 });
+
+//////////////////// 2FA ////////////////////////////////////
+app.post('/verify-two-factor', (req, res) => {
+    const twoFactorPass  = req.body;
+    const userId = req.session.userId; // Supposons que l'identifiant de l'utilisateur est stocké dans la session
+  
+    // Récupérer le code OTP associé à l'utilisateur depuis la base de données ou le cache
+    const storedOtp = getOtpFromDatabase(userId);
+  
+    // Vérifier le code OTP fourni par l'utilisateur
+    if (twoFactorPass === storedOtp) {
+      res.json({ success: true });
+    } else {
+      res.json({ success: false, msg: 'Code à deux facteurs invalide' });
+    }
+  });
+
 
 // SERVER ON
 const server = app.listen(3006, function () {
