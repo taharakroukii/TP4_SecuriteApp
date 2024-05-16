@@ -38,7 +38,12 @@ app.use((req, res, next) => {
 });
 
 // 2FA
-const code2Facteur = otpGenerator.generate(6, { upperCaseAlphabets: false, specialChars: false });
+const code2Facteur = otpGenerator.generate(6, { 
+    lowerCaseAlphabets : false,
+    upperCaseAlphabets: false, 
+    specialChars: false 
+});
+
 
 /****enregistrer utilisateur*****/
 app.post('/enregistrer', (req, res) => {

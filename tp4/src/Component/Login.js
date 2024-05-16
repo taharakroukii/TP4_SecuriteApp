@@ -208,7 +208,6 @@ const Login = (props) => {
           setShowTwoFactorModal(true);
         }
 
-        
       }).catch(error => console.log(error));
   };
 
