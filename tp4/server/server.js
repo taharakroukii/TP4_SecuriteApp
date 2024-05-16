@@ -43,6 +43,9 @@ const code2Facteur = otpGenerator.generate(6, {
     upperCaseAlphabets: false, 
     specialChars: false 
 });
+code2Facteur.toString()
+
+
 
 
 /****enregistrer utilisateur*****/
@@ -88,15 +91,19 @@ app.post('/login', express.urlencoded({extended: false}), (req, res) => {
 
                         //2 - store user information in session, typically a user id
                         req.session.user = result;
+                        
+                        //3 - generer le code à 2 facteurs
+                        const deuxfacteur = code2Facteur.toString()
+                        req.session.twofactor = deuxfacteur
 
-                        //3 save the session before redirection to ensure page
+                        //4 save the session before redirection to ensure page
                         // load does not happen before session is saved
                         req.session.save((e) => {
                             if (e) console.log(e);
                             console.log(req.session.user);
                             if (!responseHasBeenSent) {
                                 responseHasBeenSent = true;
-                                res.json("Un utilisateur est connecté ! \n le code 2FA est : "+code2Facteur);
+                                res.json("Un utilisateur est connecté ! \n le code 2FA est : "+ deuxfacteur);
                             }
                         })
                     })
@@ -126,14 +133,11 @@ app.get('/login', (req, res) => {
 
 //////////////////// 2FA ////////////////////////////////////
 app.post('/verify-two-factor', (req, res) => {
-    const twoFactorPass  = req.body;
+    const twoFactorPass  = req.body.twoFactorPass;
     const userId = req.session.userId; // Supposons que l'identifiant de l'utilisateur est stocké dans la session
   
     // Récupérer le code OTP associé à l'utilisateur depuis la base de données ou le cache
-    const storedOtp = getOtpFromDatabase(userId);
-  
-    // Vérifier le code OTP fourni par l'utilisateur
-    if (twoFactorPass === storedOtp) {
+    if (twoFactorPass === req.session.twofactor) {
       res.json({ success: true });
     } else {
       res.json({ success: false, msg: 'Code à deux facteurs invalide' });

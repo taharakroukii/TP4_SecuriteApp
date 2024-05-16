@@ -14,8 +14,7 @@ const ModalDeuxFacteur = () => {
             } else {
               console.log(response.data.msg);
             }
-          })
-          .catch(error => console.log(error));
+          }).catch(error => console.log(error));
       };
 
 
